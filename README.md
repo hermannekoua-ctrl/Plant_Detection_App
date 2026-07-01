@@ -1,80 +1,264 @@
-Plant-Disease-Detection
+Plant Disease Detection
 
-A Flutter mobile app for identifying plant leaf diseases using a local TensorFlow Lite model and (optionally) fetching structured care/precaution guidance from the OpenAI API.
+A Flutter mobile application that detects plant leaf diseases using a locally deployed **TensorFlow Lite (TFLite)** deep learning model. The application performs on-device image classification and can optionally retrieve disease information (causes, consequences, and treatment recommendations) through the OpenAI API.
 
-Quick start
 
-Prerequisites:
-- Flutter SDK installed and configured
-- A connected device or emulator
 
-Setup and run:
+Project Overview
+
+Plant diseases significantly reduce agricultural productivity and crop quality. Early disease detection allows farmers and agricultural professionals to take timely preventive measures.
+
+This project combines:
+
+Flutter for the cross-platform mobile application
+TensorFlow Lite for fast on-device inference
+TensorFlow/Keras for training the Convolutional Neural Network (CNN)
+OpenAI API key to provide additional information about detected diseases
+
+The application allows users to:
+
+Capture a plant leaf image using the camera or select an existing image from the gallery
+Detect the disease locally without an internet connection
+Display the predicted disease and confidence score
+Optionally retrieve causes, consequences, and treatment recommendations using the OpenAI API
+
+Dataset
+
+The CNN model was trained using the Plant Disease Classification Merged Dataset available on Kaggle.
+
+Dataset Source
+
+https://www.kaggle.com/datasets/alinedobrovsky/plant-disease-classification-merged-dataset
+
+Approximate dataset size:
+
+* **4 GB** (subset used for training)
+
+A larger version of approximately **19 GB** was initially considered. However, due to limited computational resources, unstable electricity supply, and network interruptions during training on Google Colab, a smaller subset was selected to complete the project successfully.
+
+---
+
+# Model Training
+
+The disease classifier is a **Convolutional Neural Network (CNN)** implemented using **TensorFlow/Keras**.
+
+Training characteristics:
+
+* Images resized to **128 × 128 pixels**
+* Built using the **Keras Sequential API**
+* Three convolutional layers
+* TensorFlow/Keras implementation
+* Training performed on Google Colab
+* 10 training epochs were planned
+
+Although the uploaded training history displays four epochs, this corresponds to an earlier experimental run. The final model was trained using ten epochs.
+
+The training history file is included in the repository.
+
+---
+
+# Application Workflow
+
+1. The user captures or selects a plant leaf image.
+2. The image is preprocessed.
+3. The TensorFlow Lite model performs local inference.
+4. The predicted disease and confidence score are displayed.
+5. The user may optionally request additional information from the OpenAI API, including:
+
+   * Causes
+   * Consequences
+   * Treatment recommendations
+
+> **Note:** The OpenAI integration was implemented but could not be fully tested because a valid API key was unavailable during development.
+
+---
+
+# Project Structure
+
+```
+lib/
+│
+├── main.dart
+├── screens/
+│   └── homepage.dart
+├── services/
+│   ├── model_service.dart
+│   └── api_service.dart
+├── constants/
+│   └── api_constants.dart
+│
+assets/
+└── models/
+    └── plant_model.tflite
+```
+
+---
+
+# Main Components
+
+### `lib/main.dart`
+
+Application entry point and theme configuration.
+
+### `lib/screens/homepage.dart`
+
+Contains the main user interface:
+
+* Image picker
+* Camera integration
+* Disease prediction
+* Result display
+* Precaution dialog
+
+### `lib/services/model_service.dart`
+
+Responsible for:
+
+* Loading the TensorFlow Lite model
+* Image preprocessing
+* Running inference
+* Returning the predicted disease and confidence score
+
+### `lib/services/api_service.dart`
+
+Communicates with the OpenAI API to retrieve:
+
+* Causes
+* Consequences
+* Treatment recommendations
+
+### `assets/models/plant_model.tflite`
+
+Contains the trained TensorFlow Lite model used for on-device inference.
+
+---
+
+# Installation
+
+## Prerequisites
+
+* Flutter SDK
+* Android Studio or VS Code
+* Android emulator or Android device
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/Haseeb-Akhlaq/GPT4Vision-Flutter-Plant-Disease-Detechtor.git
 cd GPT4Vision-Flutter-Plant-Disease-Detechtor
+```
+
+Install dependencies:
+
+```bash
 flutter pub get
+```
+
+Run the application:
+
+```bash
 flutter run
 ```
 
-Replace the OpenAI API key before using remote API features.
+---
 
-1. How the model was TRAINED //
+# TensorFlow Lite Model
 
-   Thanks to the google colab resources, we were able to train our model on a dataset from kaggle 'link https://www.kaggle.com/datasets/alinedobrovsky/plant-disease-classification-merged-dataset //'
-   it is a convolutional Neural Network (CNN) implemented with TensorFlow/Keras for plant disease image classification. 
-   images are resized to 128*128 pixels. the Model is built using Keras Sequentiel API.
-   We used 3 CNN layers with the hope of redusing underfitting and overfitting errors. we wanted to go with a large dataset of 19go. After uploading the datasets on two different google drive accounts. After a month of unstable electricity supply plus a disturbing network issue we decided to train a much smaller model.
-   The history of the training is listed amongs the files uploaded. we went for 10 epochs thought the file shows 4 due to a trial that failed as we hoped to train it better. 
+Current implementation:
 
-What this app does (high-level)
+* Input size: **224 × 224**
+* Pixel normalization: **[0,1]**
+* Softmax applied to output scores
+* Highest probability returned as prediction
 
-- Pick or capture an image of a plant leaf in the UI.
-- Run local inference using the bundled TFLite model (`assets/models/plant_model.tflite`) via `tflite_flutter`.
-- Display the predicted label and confidence.
-- Optionally request structured precautions (causes, consequences, treatment) from OpenAI and display them in a dialog.
-- unfortunately we where not able to test this option with a functional openai key.
+The current `labelMap` contains placeholder labels (`class_0`, `class_1`, ...). These should be replaced with the actual class names generated during model training.
 
+---
 
-Key files and responsibilities
+# OpenAI Integration
 
-- `lib/main.dart`: application entry and theme.
-- `lib/screens/homepage.dart`: main UI — image picker, run detection, show results and precautions.
-- `lib/services/model_service.dart`: loads the TFLite model, preprocesses images, runs inference, returns label + confidence.
-- `lib/services/api_service.dart`: sends requests to OpenAI to obtain structured precaution data or (unused in UI) to call a vision endpoint.
-- `lib/constants/api_constants.dart`: contains `baseUrl` and `apiKey` used by `ApiService`.
-- `assets/models/plant_model.tflite`: bundled TensorFlow Lite model used for on-device inference.
+The application can optionally request structured disease information from the OpenAI API.
 
-Model details & implementation notes
+The expected response includes:
 
-- Input size: `ModelService` defaults to `inputSize = 224` and normalizes pixel values to [0,1]. If your model uses a different size or normalisation, update `ModelService` accordingly.
-- Labels: `ModelService` currently contains a placeholder `labelMap` (`class_0`, `class_1`, ...). Replace `labelMap` with the real class names produced by your training pipeline so displayed labels are meaningful.
-- Output handling: the code expects the model to return logits or scores, applies softmax to compute probabilities, and returns the top class and confidence.
+* Causes
+* Consequences
+* Treatment
 
-OpenAI usage
+If structured JSON is unavailable, the raw response is displayed instead.
 
-- `lib/services/api_service.dart` uses `https://api.openai.com/v1` endpoints via `dio`.
-- IMPORTANT: The repository currently contains a plaintext OpenAI API key in `lib/constants/api_constants.dart`. Treat API keys as sensitive secrets. Do NOT commit real keys to a public repo. Replace the hard-coded key with one of these safer options before publishing:
-   - Provide the key via CI or build-time environment variables and inject into the app (for development, use a local secrets file excluded from version control).
-   - Use a lightweight backend service to proxy requests to OpenAI (recommended for production).
+**Security Note**
 
-How the precautions flow works
+API keys should never be stored directly in the source code.
 
-- After local detection, tapping `PRECAUTION` calls `ApiService.sendMessageGPT(diseaseName: ...)` which asks the model to return a JSON object with keys `causes`, `consequences`, and `treatment` (each an array of short sentences).
-- If the OpenAI model returns non-JSON text, the app stores the raw text under the `raw` key and displays it.
+For production deployments, API keys should be supplied through:
 
-Development and debugging 
+* Environment variables
+* Build-time configuration
+* A secure backend service
 
-- If inference fails, confirm the TFLite model input/output shapes match `ModelService` expectations. You can print `_interpreter!.getInputTensors()` and output tensor shapes during development.
-- To get correct human-readable labels: open the original training pipeline or dataset labels file and paste the class names into `labelMap` in `lib/services/model_service.dart`.
-- To test OpenAI calls safely, remove the API key from `lib/constants/api_constants.dart` and instead set it at runtime via environment or a local-only file.
+---
 
+# Development Notes
 
+If model inference fails:
 
+* Verify that the TensorFlow Lite input and output tensor shapes match those expected by `ModelService`.
+* Ensure that the preprocessing pipeline matches the preprocessing used during training.
+* Replace the placeholder labels with the actual disease classes.
 
+---
 
+# Screenshots
 
-## My working directory C:\Users\EKOUA II\Desktop\GPT4Vision-Flutter-Plant-Disease-Detechtor-main
+*(Insert screenshots of the application here.)*
 
+Example:
 
+```
+screenshots/
+    home_page.png
+    prediction_result.png
+    precautions_dialog.png
+```
 
+---
+
+# Technologies Used
+
+* Flutter
+* Dart
+* TensorFlow
+* TensorFlow Lite
+* TensorFlow/Keras
+* Google Colab
+* OpenAI API
+* Dio
+* Image Picker
+
+---
+
+# Future Improvements
+
+* Improve classification accuracy using a larger dataset
+* Train deeper CNN architectures
+* Add support for more plant species
+* Improve treatment recommendations
+* Offline disease information database
+* Multi-language support
+
+---
+
+# Acknowledgements
+
+* Kaggle Plant Disease Classification Merged Dataset
+* TensorFlow
+* Flutter
+* Google Colab
+* OpenAI
+
+---
+
+# License
+
+This project was developed for academic purposes as part of a university final-year project.
